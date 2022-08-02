@@ -20,8 +20,8 @@ import {
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
-import { tokenBuilder } from './facture-grammer';
-import { Lexer, TokenType } from 'chevrotain';
+import { parse } from './parser/parser';
+import toAst from './parser/semantic-actions';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -34,7 +34,6 @@ let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 
-let FactureLexer: Lexer;
 
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
@@ -109,7 +108,7 @@ connection.onDidChangeConfiguration(change => {
 	}
 
 	// Revalidate all open text documents
-	documents.all().forEach(validateTextDocument);
+	// documents.all().forEach(validateTextDocument);
 });
 
 function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
@@ -135,9 +134,8 @@ documents.onDidClose(e => {
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent(change => {
-	const inputText = change.document.getText();
-
-	validateTextDocument(change.document);
+	const result = toAst(change.document.getText());
+	console.log(result);
 });
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
